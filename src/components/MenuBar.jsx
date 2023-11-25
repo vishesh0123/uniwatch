@@ -1,86 +1,48 @@
-import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material'
-import React, { useState } from 'react'
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import React, { useState } from 'react';
+import { AppBar, Box, Button, Toolbar, Typography, useMediaQuery, useTheme } from '@mui/material';
 
 function MenuBar() {
-    const pages = ['Positions', 'Pools', 'Historical Data', 'Wallet Tracking', 'Alerts']
-    const networks = ['Ethereum', 'Polygon']
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const pages = ['Positions', 'Pools', 'Historical Data', 'Wallet Tracking', 'Alerts'];
 
-    const [nmenu, setnmenu] = useState(false);
+    const titleStyles = {
+        flexGrow: 1,
+        fontWeight: 600, // Bold
+        color: 'rgba(255, 255, 255, 0.9)', // White with slight opacity
+        textDecoration: 'none',
+        fontSize: isMobile ? '1rem' : '1.5rem', // Responsive font size
+        textAlign: 'left',
+        fontFamily: '"Roboto Condensed", sans-serif',
+        textShadow: '0px 0px 1px rgba(255, 255, 255, 0.7)', // Soft white glow
+    };
+
+
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position='static'
-                sx={{
-                    width: '98%',
-                    backgroundColor: '#9B1E26',
-                    border: '1px solid #9B1E26',
-                    borderRadius: '20px',
-                    height: '45px',
-                    marginTop: 3,
-                    marginLeft: 2
-
-                }}>
+            <AppBar position="static" sx={{
+                background: 'linear-gradient(94.07deg, #9B1E26 -17.35%, #000000 83.2%)',
+                borderRadius: 1,
+                m: 2,
+                boxSizing: 'border-box', // Include padding and borders in the element's width
+                width: 'calc(100% - 16px)', // Adjust for margin, assuming 8px margin on each side
+                overflow: 'hidden', // Prevents child elements from causing overflow
+            }}>
                 <Toolbar>
-                    <Typography
-                        sx={{
-                            fontSize: 20,
-                            fontWeight: "bold",
-                            fontFamily: 'Roboto Condensed',
-                            marginBottom: 2
-                        }} >
+                    <Typography variant="h6" component="div" sx={titleStyles}>
                         Uniswap v3 Position Tracker
-
                     </Typography>
-                    <Box sx={{ display: { xs: 'none', md: 'flex', marginLeft: 100 } }}>
+                    <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         {pages.map((page) => (
-                            <Button
-                                key={page}
-                                sx={{
-                                    color: 'white',
-                                    display: 'block',
-                                    marginBottom: 2,
-                                    marginLeft: 3
-                                }}
-                            >
-                                <Typography sx={{
-                                    fontSize: 14,
-                                    textTransform: 'none',
-                                    fontWeight: 'bold'
-                                }}>{page}</Typography>
+                            <Button key={page} sx={{ color: 'white', mx: 1 }}>
+                                {page}
                             </Button>
                         ))}
-
-                    </Box>
-                    <Box>
-                        <Button sx={{
-                            color: 'white',
-                            display: 'block',
-                            marginBottom: 2,
-                            marginLeft: 35
-                        }} onClick={() => {
-                            setnmenu(true);
-                        }}>
-                            <Typography sx={{
-                                fontSize: 16,
-                                textTransform: 'none',
-                                fontWeight: 'bold'
-                            }}>Select Network</Typography>
-                        </Button>
-                        <Menu open={nmenu} keepMounted sx={{
-                            left: '1000px'
-                        }}>
-                            {networks.map((network) => (
-                                <MenuItem key={network} >
-                                    <Typography textAlign="center">{network}</Typography>
-                                </MenuItem>
-                            ))}
-                        </Menu>
-
                     </Box>
                 </Toolbar>
             </AppBar>
         </Box>
-    )
+    );
 }
 
-export default MenuBar
+export default MenuBar;
