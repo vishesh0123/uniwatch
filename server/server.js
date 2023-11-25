@@ -1,7 +1,10 @@
 import express from "express";
-import { connectDatabase } from './db.js'
+import { createDBConnection, createQueue, syncDb } from './initialize.js';
+
 const app = express()
 
-connectDatabase();
+let dbQueue = createQueue();
+
+syncDb(dbQueue);
 
 app.listen(5174);
