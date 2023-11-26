@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, OutlinedInput } from '@mui/material';
+import axios from 'axios';
+import { saveAs } from 'file-saver';
 
 const transactionTypes = ['Swap', 'Mint', 'Burn', 'Collect'];
 
@@ -12,13 +14,25 @@ function HistoricalData() {
   const [transactions, setTransactions] = useState([]); // This would be your fetched data
 
 
-  // Fetch transactions (this function would be more complex in a real application)
-  const fetchTransactions = () => {
-    // TODO: Fetch transactions from an API or service
-    // For now, we'll use dummy data
-    setTransactions([
-      // ...some dummy transaction data
-    ]);
+  const fetchTransactions = async () => {
+    try {
+      const response = await axios.get('127.0.0.1:5173/data', {
+        params: {
+          from: dates.start,
+          to: dates.end,
+          wallet: walletAddress,
+          pool: poolAddress,
+          swap: transactionType.includes('Swap'),
+          mint: transactionType.includes('Mint'),
+          burn: transactionType.includes('Burn'),
+          collect: transactionType.includes('Collect')
+        }
+      });
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      // Handle error (e.g., show notification to the user)
+    }
   };
 
   // Handle date filter change
@@ -34,18 +48,36 @@ function HistoricalData() {
     setTransactionType(typeof value === 'string' ? value.split(',') : value);
   };
 
-  // Export filtered data as CSV
   const exportAsCsv = () => {
-    // TODO: Implement CSV export using utility
-    exportToCsv(transactions, 'uniswap-v3-transactions.csv');
+    // Convert transactions to CSV format
+    const csvRows = [
+      // This assumes that your transactions have these fields
+      'id,block_number,timestamp,gas_used,gas_price,network_name'
+    ];
+
+    transactions.forEach(tx => {
+      const csvRow = [
+        tx.id,
+        tx.block_number,
+        new Date(tx.transaction_timestamp).toISOString(),
+        tx.gas_used,
+        tx.gas_price,
+        tx.network_name
+      ];
+      csvRows.push(csvRow.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8' });
+    saveAs(blob, 'uniswap-v3-transactions.csv');
   };
 
-  // Export filtered data as JSON
+  // Export data as JSON
   const exportAsJson = () => {
-    // TODO: Implement JSON export using utility
-    exportToJson(transactions, 'uniswap-v3-transactions.json');
+    const jsonString = JSON.stringify(transactions);
+    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+    saveAs(blob, 'uniswap-v3-transactions.json');
   };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', mt: '30px' }}>
       {/* Date Filters */}
@@ -203,6 +235,7 @@ function HistoricalData() {
       <Box sx={{ display: "flex", flexDirection: 'row', justifyContent: 'center', mt: '30px' }}>
         <Button onClick={exportAsCsv}>Export as CSV</Button>
         <Button onClick={exportAsJson}>Export as JSON</Button>
+        <Button onClick={fetchTransactions}>Fetch Transactions</Button>
       </Box>
     </Box>
   );
