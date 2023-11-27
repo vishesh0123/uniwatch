@@ -1,46 +1,44 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, OutlinedInput } from '@mui/material';
+import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, OutlinedInput, Typography } from '@mui/material';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
 
 const transactionTypes = ['Swap', 'Mint', 'Burn', 'Collect'];
 
 function HistoricalData() {
-  // State for filters
   const [dates, setDates] = useState({ start: '', end: '' });
   const [transactionType, setTransactionType] = useState([]);
   const [walletAddress, setWalletAddress] = useState('');
   const [poolAddress, setPoolAddress] = useState('');
-  const [transactions, setTransactions] = useState([]); // This would be your fetched data
+  const [transactions, setTransactions] = useState([]);
+  const [isTransactionData, setIsTransactionData] = useState(true);
 
 
   const fetchTransactions = async () => {
     try {
-      const response = await axios.get('127.0.0.1:5173/data', {
+      const response = await axios.get('http://127.0.0.1:5174/data', {
         params: {
-          from: dates.start,
-          to: dates.end,
-          wallet: walletAddress,
-          pool: poolAddress,
+          from: dates.start === '' ? false : dates.start,
+          to: dates.end === '' ? false : dates.end,
+          wallet: walletAddress === '' ? false : walletAddress,
+          pool: poolAddress === '' ? false : poolAddress,
           swap: transactionType.includes('Swap'),
           mint: transactionType.includes('Mint'),
           burn: transactionType.includes('Burn'),
           collect: transactionType.includes('Collect')
         }
       });
+
       setTransactions(response.data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
-      // Handle error (e.g., show notification to the user)
     }
   };
 
-  // Handle date filter change
   const handleDateChange = (event) => {
     setDates({ ...dates, [event.target.name]: event.target.value });
   };
 
-  // Handle transaction type filter change
   const handleTransactionTypeChange = (event) => {
     const {
       target: { value },
@@ -49,17 +47,23 @@ function HistoricalData() {
   };
 
   const exportAsCsv = () => {
-    // Convert transactions to CSV format
     const csvRows = [
-      // This assumes that your transactions have these fields
-      'id,block_number,timestamp,gas_used,gas_price,network_name'
+      'id,transaction_id,timestamp,pool_id,sender,recipient,amount0,amount1,amount_usd,tick,block_number,gas_used,gas_price,network_name'
     ];
 
     transactions.forEach(tx => {
       const csvRow = [
         tx.id,
+        tx.transaction_id,
+        tx.timestamp,
+        tx.pool_id,
+        tx.sender,
+        tx.recipient,
+        tx.amount0,
+        tx.amount1,
+        tx.amount_usd,
+        tx.tick,
         tx.block_number,
-        new Date(tx.transaction_timestamp).toISOString(),
         tx.gas_used,
         tx.gas_price,
         tx.network_name
@@ -72,7 +76,6 @@ function HistoricalData() {
     saveAs(blob, 'uniswap-v3-transactions.csv');
   };
 
-  // Export data as JSON
   const exportAsJson = () => {
     const jsonString = JSON.stringify(transactions);
     const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
@@ -80,9 +83,86 @@ function HistoricalData() {
   };
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', mt: '30px' }}>
-      {/* Date Filters */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', ml: "20px", mr: '20px' }}>
-        <TextField
+
+      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+        <Box sx={{ ml: "20px", border: '1px solid white', borderRadius: '5px', width: '237px' }}>
+          <Button onClick={() => {
+            setIsTransactionData(true);
+          }} sx={{ borderRight: '1px solid white', backgroundColor: isTransactionData ? 'GrayText' : 'inherit' }}>
+            <Typography style={{ 'textTransform': 'none', color: 'white' }}>
+              Transactions Data
+            </Typography>
+          </Button>
+          <Button onClick={() => {
+            setIsTransactionData(false);
+          }} sx={{ backgroundColor: isTransactionData ? 'inherit' : 'GrayText' }}>
+            <Typography style={{ 'textTransform': 'none', color: 'white' }}>
+              Pool Data
+            </Typography>
+          </Button>
+
+        </Box>
+        <Box sx={{ ml: '20px' }}>
+          <FormControl sx={{
+            '& .css-1yk1gt9-MuiInputBase-root-MuiOutlinedInput-root-MuiSelect-root': {
+              color: 'white'
+
+            },
+            '& label.Mui-focused': {
+              color: 'white',
+            },
+            '& .MuiInput-underline:after': {
+              borderBottomColor: 'white',
+            },
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: 'white',
+              },
+              '&:hover fieldset': {
+                borderColor: 'white',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'white',
+              },
+              '& input': {
+                color: 'white',
+              },
+              '& select': {
+                color: 'white',
+              },
+              '& .MuiCheckbox-root': {
+                color: 'white',
+              },
+              '& .MuiSvgIcon-root': { // This will ensure that icons are also white
+                color: 'white',
+              },
+              width: '250px',
+              height: '35px'
+            },
+            '& .MuiInputLabel-root': { // label color
+              color: 'white',
+            },
+            '& .MuiFormHelperText-root': { // helper text color
+              color: 'white',
+            },
+          }}>
+            <InputLabel id="demo-simple-select-label">Network</InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={10}
+              label="Network"
+              onChange={() => { }}
+            >
+              <MenuItem value={10}>Ethereum</MenuItem>
+              <MenuItem value={20}>Polygon</MenuItem>
+              <MenuItem value={30}>-</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', ml: "20px", mr: '20px', mt: '40px' }}>
+        {isTransactionData && <TextField
           label="Start Date"
           type="date"
           name="start"
@@ -104,8 +184,8 @@ function HistoricalData() {
             '& .MuiInputLabel-root': { color: 'white' }, // label color
             '& .MuiFormHelperText-root': { color: 'white' },
           }}
-        />
-        <TextField
+        />}
+        {isTransactionData && <TextField
           label="End Date"
           type="date"
           name="end"
@@ -127,10 +207,13 @@ function HistoricalData() {
             '& .MuiInputLabel-root': { color: 'white' }, // label color
             '& .MuiFormHelperText-root': { color: 'white' },
           }}
-        />
+        />}
 
-        {/* Transaction Type Filter */}
-        <FormControl sx={{
+        {isTransactionData && <FormControl sx={{
+          '& .css-9ddj71-MuiInputBase-root-MuiOutlinedInput-root': {
+            color: 'white'
+
+          },
           '& label.Mui-focused': {
             color: 'white',
           },
@@ -185,10 +268,10 @@ function HistoricalData() {
               </MenuItem>
             ))}
           </Select>
-        </FormControl>
+        </FormControl>}
 
-        {/* Wallet Address Filter */}
-        <TextField
+
+        {isTransactionData && <TextField
           label="Wallet Address"
           value={walletAddress}
           onChange={(e) => setWalletAddress(e.target.value)}
@@ -207,9 +290,8 @@ function HistoricalData() {
             '& .MuiInputLabel-root': { color: 'white' }, // label color
             '& .MuiFormHelperText-root': { color: 'white' },
           }}
-        />
+        />}
 
-        {/* Pool Address Filter */}
         <TextField
           label="Pool Address"
           value={poolAddress}

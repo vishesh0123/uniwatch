@@ -2,8 +2,10 @@ import express from "express";
 import { createQueue, syncDb } from './initialize.js';
 import mysql from 'mysql2'
 import dbConfig from '../db.config.js'
+import cors from 'cors';
 
 const app = express()
+app.use(cors());
 
 let dbQueue = createQueue();
 
@@ -16,7 +18,7 @@ app.get('/data', (req, res) => {
     let queryParams = [];
     let queryParts = [];
 
-    if (mint !== undefined) {
+    if (mint === 'true') {
         let mintSql = `
         SELECT 
         mints.*,
@@ -36,7 +38,7 @@ app.get('/data', (req, res) => {
 
     }
 
-    if (burn !== undefined) {
+    if (burn === 'true') {
         let burnSql = `
         SELECT 
         burns.*,
@@ -55,7 +57,7 @@ app.get('/data', (req, res) => {
         queryParts.push(burnSql);
     }
 
-    if (swap !== undefined) {
+    if (swap === 'true') {
         let swapSql = `
         SELECT 
         swaps.*,
@@ -74,29 +76,28 @@ app.get('/data', (req, res) => {
         queryParts.push(swapSql);
 
     }
-    if (from) {
+    if (from !== 'false') {
         queryParams.push(from);
         queryParams.push(from);
         queryParts = queryParts.map(part => part + ' AND transactions.timestamp >= ?');
     }
-    if (to) {
+    if (to !== 'false') {
         queryParams.push(to);
         queryParams.push(to);
         queryParts = queryParts.map(part => part + ' AND transactions.timestamp <= ?');
     }
-    if (wallet) {
+    if (wallet !== 'false') {
         queryParams.push(wallet);
         queryParams.push(wallet);
         queryParts = queryParts.map(part => part + ' AND transactions.wallet = ?');
     }
-    if (pool) {
+    if (pool !== 'false') {
         queryParams.push(pool);
         queryParams.push(pool);
         queryParts = queryParts.map(part => part + ' AND pool_id = ?');
     }
 
     let combinedSql = queryParts.join(' UNION ALL ');
-    console.log(combinedSql);
 
     connection.query(combinedSql, queryParams, (error, results) => {
         connection.end();
