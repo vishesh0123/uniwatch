@@ -28,12 +28,9 @@ export const getLatestBlock = async (network_id) => {
 }
 
 export const getTransactions = async (minBlock, maxBlock, skip, network_id) => {
-  console.log("Inside transaction", network_id);
   let subgraphUrl;
   if (network_id === 1) {
-    console.log("here");
     subgraphUrl = process.env.ethereum;
-    console.log(subgraphUrl);
   }
   if (network_id === 137) {
     subgraphUrl = process.env.polygon;
@@ -121,9 +118,8 @@ export const getTransactions = async (minBlock, maxBlock, skip, network_id) => {
       }
     }
   }`
-  console.log("dataa");
+  
   let data = await axios.post(subgraphUrl, { query: query });
-  console.log("dataa");
   return data.data.data.transactions;
 
 }

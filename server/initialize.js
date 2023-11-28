@@ -22,7 +22,14 @@ export const createQueue = () => {
     const dbqueue = new Queue('Queue For Data Fetching and Storing');
     dbqueue.on('completed', () => {
         dbqueue.isReady().then(() => {
-            syncDb(dbqueue);
+            const cache = JSON.parse(fs.readFileSync('cache.json'));
+
+            if (cache["ethereum"] !== null) {
+                syncDb(dbqueue, 1);
+            }
+            if (cache["polygon"] !== null) {
+                syncDb(dbqueue, 137);
+            }
         })
 
     })
@@ -43,7 +50,6 @@ export const createQueue = () => {
 
             for (let i = 0; i <= 5000; i++) {
                 data = await getTransactions(minBlock, maxBlock, skip, network);
-                console.log("done");
                 data.forEach(tx => {
                     const { id, blockNumber, timestamp, gasUsed, gasPrice, mints, burns, swaps, collects } = tx;
                     const sql = `INSERT INTO transactions (id, block_number, timestamp, gas_used, gas_price , network_id) VALUES ("${id}", ${parseInt(blockNumber)}, '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', ${parseInt(gasUsed)}, ${parseInt(gasPrice)},${network})`;

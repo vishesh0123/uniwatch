@@ -119,6 +119,5 @@ app.get('/data', (req, res) => {
     });
 
 })
-console.log("lets make server");
 
 app.listen(5174);
