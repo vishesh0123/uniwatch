@@ -3,7 +3,7 @@ import { AppBar, Box, Button, Toolbar, Typography, useMediaQuery, useTheme } fro
 
 // Import your components here
 // import Positions from './Positions';
-// import Pools from './Pools';
+import Pool from './Pool';
 import HistoricalData from './HistoricalData';
 // import WalletTracking from './WalletTracking';
 // import Alerts from './Alerts';
@@ -39,7 +39,7 @@ function MenuBar() {
             case 'Positions':
                 return <Positions />;
             case 'Pools':
-                return <Pools />;
+                return <Pool />;
             case 'Historical Data':
                 return <HistoricalData />;
             case 'Wallet Tracking':

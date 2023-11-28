@@ -1,4 +1,10 @@
 {
   "ethereum": 18661918,
-  "polygon": 0
+  "polygon": null,
+  "arbitrum": null,
+  "optimism": null,
+  "bnb": null,
+  "base": null,
+  "avalanche": null,
+  "celo": null
 }
