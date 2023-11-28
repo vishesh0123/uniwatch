@@ -3,13 +3,19 @@ import { createQueue, syncDb } from './initialize.js';
 import mysql from 'mysql2'
 import dbConfig from '../db.config.js'
 import cors from 'cors';
+import fs from 'fs';
 
 const app = express()
 app.use(cors());
 
 let dbQueue = createQueue();
-
-syncDb(dbQueue);
+const cache = JSON.parse(fs.readFileSync('cache.json'));
+if (cache["ethereum"] !== null) {
+    syncDb(dbQueue, 1);
+}
+if (cache["polygon"] !== null) {
+    syncDb(dbQueue, 137);
+}
 
 app.get('/data', (req, res) => {
     const { from, to, wallet, pool, swap, mint, burn } = req.query;
@@ -113,5 +119,6 @@ app.get('/data', (req, res) => {
     });
 
 })
+console.log("lets make server");
 
 app.listen(5174);

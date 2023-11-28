@@ -29,6 +29,7 @@ export const createQueue = () => {
     dbqueue.process(async (job, done) => {
         let minBlock = job.data.lastSync;
         let maxBlock = job.data.latest;
+        let network = job.data.network;
         if (minBlock == maxBlock || minBlock > maxBlock) {
             job.progress(100);
             done();
@@ -41,10 +42,11 @@ export const createQueue = () => {
             console.log("\x1b[32m", `Database is Updated Upto Block ${minBlock - 1}`);
 
             for (let i = 0; i <= 5000; i++) {
-                data = await getTransactions(minBlock, maxBlock, skip);
+                data = await getTransactions(minBlock, maxBlock, skip, network);
+                console.log("done");
                 data.forEach(tx => {
                     const { id, blockNumber, timestamp, gasUsed, gasPrice, mints, burns, swaps, collects } = tx;
-                    const sql = `INSERT INTO transactions (id, block_number, timestamp, gas_used, gas_price , network_id) VALUES ("${id}", ${parseInt(blockNumber)}, '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', ${parseInt(gasUsed)}, ${parseInt(gasPrice)},1)`;
+                    const sql = `INSERT INTO transactions (id, block_number, timestamp, gas_used, gas_price , network_id) VALUES ("${id}", ${parseInt(blockNumber)}, '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', ${parseInt(gasUsed)}, ${parseInt(gasPrice)},${network})`;
                     conn.query(sql, function (err, results, fields) {
                         if (err !== null) {
                             console.log(err);
@@ -100,7 +102,14 @@ export const createQueue = () => {
             }
             console.log("\x1b[32m", `Fetched Block ${minBlock} to Block ${maxBlock} Successfully !`);
             const cache = JSON.parse(fs.readFileSync('cache.json'));
-            cache.ethereum = maxBlock;
+            if (network === 1) {
+                cache.ethereum = maxBlock;
+
+            }
+            if (network === 137) {
+                cache.polygon = maxBlock;
+            }
+
             fs.writeFileSync('cache.json', JSON.stringify(cache, null, 2));
 
 
@@ -111,10 +120,17 @@ export const createQueue = () => {
     return dbqueue;
 }
 
-export const syncDb = async (dbqueue) => {
+export const syncDb = async (dbqueue, network_id) => {
     const cache = JSON.parse(fs.readFileSync('cache.json'));
-    let lastSync = cache["ethereum"];
-    let latest = await getLatestBlock();
+    let lastSync;
+    if (network_id === 1) {
+        lastSync = cache["ethereum"];
+    }
+    if (network_id === 137) {
+        lastSync = cache["polygon"];
+    }
+
+    let latest = await getLatestBlock(network_id);
     let start = lastSync + 1;
     let div = Math.floor((latest - start + 1) / 5000);
 
@@ -122,7 +138,8 @@ export const syncDb = async (dbqueue) => {
     for (let i = 0; i < div; i++) {
         dbqueue.add({
             lastSync: start,
-            latest: start + 4999
+            latest: start + 4999,
+            network: network_id
         })
         start = start + 5000;
 
@@ -130,7 +147,8 @@ export const syncDb = async (dbqueue) => {
 
     dbqueue.add({
         lastSync: start,
-        latest: latest
+        latest: latest,
+        network: network_id
     })
 
 

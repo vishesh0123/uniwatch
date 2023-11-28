@@ -89,6 +89,22 @@ CREATE TABLE flashed (
     FOREIGN KEY (transaction_id) REFERENCES transactions(id)
 );
 
+CREATE TABLE pooldata (
+  id VARCHAR(255) PRIMARY KEY,
+  date TIMESTAMP NOT NULL,
+  pool_id VARCHAR(255) NOT NULL,
+  liquidity DECIMAL(38, 18) NOT NULL,
+  token0Price DECIMAL(38, 18) NOT NULL,
+  token1Price DECIMAL(38, 18) NOT NULL,
+  tick INT NOT NULL,
+  volumeToken0 DECIMAL(38, 18) NOT NULL,
+  volumeToken1 DECIMAL(38, 18) NOT NULL,
+  volumeUSD DECIMAL(38, 18) NOT NULL,
+  feesUSD DECIMAL(38, 18) NOT NULL,
+  txCount BIGINT UNSIGNED NOT NULL
+);
+
+
 INSERT INTO networks (name, chain_id, rpc_url, symbol, explorer_url) VALUES
 ('Ethereum', '1', '', 'ETH', 'https://etherscan.io');
 
