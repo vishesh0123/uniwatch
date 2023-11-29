@@ -111,5 +111,5 @@ ADD FOREIGN KEY (network_id) REFERENCES networks(id);
 INSERT INTO networks (id , name, chain_id, rpc_url, symbol, explorer_url) VALUES
 ('1',' Ethereum', '1', '', 'ETH', 'https://etherscan.io');
 
-INSERT INTO networks (name, chain_id, rpc_url, symbol, explorer_url) VALUES
+INSERT INTO networks (id , name, chain_id, rpc_url, symbol, explorer_url) VALUES
 ('137','Polygon', '137', '', 'MATIC', 'https://polygonscan.io');
