@@ -1,5 +1,5 @@
 CREATE TABLE networks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT  PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     chain_id VARCHAR(50) NOT NULL UNIQUE,
     rpc_url VARCHAR(255) NOT NULL,
@@ -104,9 +104,12 @@ CREATE TABLE pooldata (
   txCount BIGINT UNSIGNED NOT NULL
 );
 
+ALTER TABLE pooldata
+ADD COLUMN network_id INT,
+ADD FOREIGN KEY (network_id) REFERENCES networks(id);
+
+INSERT INTO networks (id , name, chain_id, rpc_url, symbol, explorer_url) VALUES
+('1',' Ethereum', '1', '', 'ETH', 'https://etherscan.io');
 
 INSERT INTO networks (name, chain_id, rpc_url, symbol, explorer_url) VALUES
-('Ethereum', '1', '', 'ETH', 'https://etherscan.io');
-
-INSERT INTO networks (name, chain_id, rpc_url, symbol, explorer_url) VALUES
-('Polygon', '137', '', 'MATIC', 'https://polygonscan.io');
+('137','Polygon', '137', '', 'MATIC', 'https://polygonscan.io');

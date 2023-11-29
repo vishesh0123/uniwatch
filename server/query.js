@@ -125,7 +125,6 @@ export const getTransactions = async (minBlock, maxBlock, skip, network_id) => {
 }
 
 export const getPoolData = async (minTimestamp, maxTimestamp, skip, pool, network_id) => {
-  console.log(typeof pool);
   let subgraphUrl;
   if (network_id === 1) {
     subgraphUrl = process.env.ethereum;
@@ -168,7 +167,6 @@ export const getPoolData = async (minTimestamp, maxTimestamp, skip, pool, networ
   `
 
   let data = await axios.post(subgraphUrl, { query: query });
-  console.log(data.data);
   return data.data.data.poolDayDatas;
 }
 

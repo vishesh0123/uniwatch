@@ -12,6 +12,8 @@ function HistoricalData() {
   const [poolAddress, setPoolAddress] = useState('');
   const [transactions, setTransactions] = useState([]);
   const [isTransactionData, setIsTransactionData] = useState(true);
+  const [currentNetwork, setCurrentNetwork] = useState(1);
+  const [fetching, setFetching] = useState(false);
 
 
   const fetchTransactions = async () => {
@@ -33,6 +35,23 @@ function HistoricalData() {
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
+    setFetching(true);
+  };
+
+  const fetchPoolData = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:5174/pooldata', {
+        params: {
+          pool: poolAddress === '' ? false : poolAddress,
+          network: 1 // Or dynamically set based on user selection
+        }
+      });
+      console.log(response.data);
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Error fetching pool data:', error);
+    }
+    setFetching(true);
   };
 
   const handleDateChange = (event) => {
@@ -47,39 +66,71 @@ function HistoricalData() {
   };
 
   const exportAsCsv = () => {
-    const csvRows = [
-      'id,transaction_id,timestamp,pool_id,sender,recipient,amount0,amount1,amount_usd,tick,block_number,gas_used,gas_price,network_name'
-    ];
+    let csvRows = [];
+    let csvString = '';
 
-    transactions.forEach(tx => {
-      const csvRow = [
-        tx.id,
-        tx.transaction_id,
-        tx.timestamp,
-        tx.pool_id,
-        tx.sender,
-        tx.recipient,
-        tx.amount0,
-        tx.amount1,
-        tx.amount_usd,
-        tx.tick,
-        tx.block_number,
-        tx.gas_used,
-        tx.gas_price,
-        tx.network_name
+    if (isTransactionData) {
+      // Headers for transaction data
+      csvRows = [
+        'id,transaction_id,timestamp,pool_id,sender,recipient,amount0,amount1,amount_usd,tick,block_number,gas_used,gas_price,network_name'
       ];
-      csvRows.push(csvRow.join(','));
-    });
 
-    const csvString = csvRows.join('\n');
+      transactions.forEach(tx => {
+        const csvRow = [
+          tx.id,
+          tx.transaction_id,
+          tx.timestamp,
+          tx.pool_id,
+          tx.sender,
+          tx.recipient,
+          tx.amount0,
+          tx.amount1,
+          tx.amount_usd,
+          tx.tick,
+          tx.block_number,
+          tx.gas_used,
+          tx.gas_price,
+          tx.network_name
+        ];
+        csvRows.push(csvRow.join(','));
+      });
+    } else {
+      // Headers for pool data
+      csvRows = [
+        'id,date,pool_id,token0Price,token1Price,tick,volumeToken0,volumeToken1,volumeUSD,feesUSD,txCount'
+      ];
+
+      transactions.forEach(pd => {
+        const csvRow = [
+          pd.id,
+          pd.date,
+          pd.pool_id,
+          pd.token0Price,
+          pd.token1Price,
+          pd.tick,
+          pd.volumeToken0,
+          pd.volumeToken1,
+          pd.volumeUSD,
+          pd.feesUSD,
+          pd.txCount
+        ];
+        csvRows.push(csvRow.join(','));
+      });
+    }
+
+    csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8' });
-    saveAs(blob, 'uniswap-v3-transactions.csv');
+    const filename = isTransactionData ? 'uniswap-v3-transactions.csv' : 'uniswap-v3-pooldata.csv';
+    saveAs(blob, filename);
+    setFetching(false);
   };
+
 
   const exportAsJson = () => {
     const jsonString = JSON.stringify(transactions);
     const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
     saveAs(blob, 'uniswap-v3-transactions.json');
+    setFetching(false);
   };
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', mt: '30px' }}>
@@ -150,12 +201,12 @@ function HistoricalData() {
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
-              value={10}
+              value={currentNetwork}
               label="Network"
-              onChange={() => { }}
+              onChange={(e) => { setCurrentNetwork(e.target.value) }}
             >
-              <MenuItem value={10}>Ethereum</MenuItem>
-              <MenuItem value={20}>Polygon</MenuItem>
+              <MenuItem value={1}>Ethereum</MenuItem>
+              <MenuItem value={137}>Polygon</MenuItem>
               <MenuItem value={30}>-</MenuItem>
             </Select>
           </FormControl>
@@ -315,9 +366,9 @@ function HistoricalData() {
       </Box>
 
       <Box sx={{ display: "flex", flexDirection: 'row', justifyContent: 'center', mt: '30px' }}>
-        <Button onClick={exportAsCsv}>Export as CSV</Button>
-        <Button onClick={exportAsJson}>Export as JSON</Button>
-        <Button onClick={fetchTransactions}>Fetch Transactions</Button>
+        {fetching && <Button onClick={exportAsCsv}>Export as CSV</Button>}
+        {fetching && <Button onClick={exportAsJson}>Export as JSON</Button>}
+        {!fetching && <Button onClick={isTransactionData ? fetchTransactions : fetchPoolData}>Fetch Transactions</Button>}
       </Box>
     </Box>
   );

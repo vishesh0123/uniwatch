@@ -3,6 +3,6 @@ const dbConfig = {
     port: '3306',
     user: 'root',
     password: '2712001vV8',
-    database: 'uniwatch'
+    database: 'new'
 }
 export default dbConfig;

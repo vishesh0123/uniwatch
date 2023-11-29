@@ -51,7 +51,8 @@ export const createQueue = () => {
                     const sql = `INSERT INTO transactions (id, block_number, timestamp, gas_used, gas_price , network_id) VALUES ("${id}", ${parseInt(blockNumber)}, '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', ${parseInt(gasUsed)}, ${parseInt(gasPrice)},${network})`;
                     conn.query(sql, function (err, results, fields) {
                         if (err !== null) {
-                            console.log(err);
+                            done();
+
                         }
                     });
                     if (mints.length > 0) {
@@ -59,7 +60,8 @@ export const createQueue = () => {
                         let query = `INSERT INTO mints (id, transaction_id , timestamp, pool_id, amount, amount0, amount1, amount_usd, tick_lower, tick_upper) VALUES ("${id}","${transaction.id}", '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', "${pool.id}", ${parseFloat(amount)}, ${parseFloat(amount0)}, ${parseFloat(amount1)},${parseFloat(amountUSD)},${parseInt(tickLower)},${parseInt(tickUpper)})`;
                         conn.query(query, function (err, results, fields) {
                             if (err !== null) {
-                                console.log(err);
+                                done();
+
                             }
                         });
 
@@ -69,7 +71,8 @@ export const createQueue = () => {
                         let query = `INSERT INTO burns (id, transaction_id , timestamp, pool_id, amount, amount0, amount1, amount_usd, tick_lower, tick_upper) VALUES ("${id}","${transaction.id}", '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', "${pool.id}", ${parseFloat(amount)}, ${parseFloat(amount0)}, ${parseFloat(amount1)},${parseFloat(amountUSD)},${parseInt(tickLower)},${parseInt(tickUpper)})`;
                         conn.query(query, function (err, results, fields) {
                             if (err !== null) {
-                                console.log(err);
+                                done();
+
                             }
 
                         });
@@ -80,7 +83,8 @@ export const createQueue = () => {
                         let query = `INSERT INTO swaps (id, transaction_id , timestamp, pool_id, sender, recipient, amount0, amount1, amount_usd, sqrt_price_x96, tick) VALUES ("${id}","${transaction.id}", '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', "${pool.id}","${sender}" , "${recipient}" ,${parseFloat(amount0)}, ${parseFloat(amount1)},${parseFloat(amountUSD)}, 0 ,${parseInt(tick)})`;
                         conn.query(query, function (err, results, fields) {
                             if (err !== null) {
-                                console.log(err);
+                                done();
+
                             }
                         });
 
@@ -90,7 +94,8 @@ export const createQueue = () => {
                         let query = `INSERT INTO mints (id, transaction_id , timestamp, pool_id, owner, amount0, amount1, amount_usd, tick_lower, tick_upper) VALUES ("${id}","${transaction.id}", '${new Date(parseInt(timestamp) * 1000).toISOString().slice(0, 19).replace('T', ' ')}', "${pool.id}", "${owner}", ${parseFloat(amount0)}, ${parseFloat(amount1)},${parseFloat(amountUSD)},${parseInt(tickLower)},${parseInt(tickUpper)})`;
                         conn.query(query, function (err, results, fields) {
                             if (err !== null) {
-                                console.log(err);
+                                done();
+
                             }
                         });
                     }
@@ -179,7 +184,6 @@ export const syncDbPool = async (dbqueue, network_id) => {
 export const createPoolQueue = () => {
     const dbqueue = new Queue('Queue For Pooldata');
     dbqueue.process(async (job, done) => {
-        console.log(job.data);
         let last = job.data.last;
         let latest = job.data.latest;
         let network = job.data.network;
@@ -206,7 +210,8 @@ export const createPoolQueue = () => {
                     volumeToken1,
                     volumeUSD,
                     feesUSD,
-                    txCount
+                    txCount,
+                    network_id
                   ) VALUES (
                     "${id}",
                     "${new Date(parseInt(date) * 1000).toISOString().slice(0, 19).replace('T', ' ')}",
@@ -219,12 +224,14 @@ export const createPoolQueue = () => {
                     ${parseFloat(volumeToken1)},
                     ${parseFloat(volumeUSD)},
                     ${parseFloat(feesUSD)},
-                    ${parseInt(txCount)}
+                    ${parseInt(txCount)},
+                    ${network}
                   );`
 
                 conn.query(query, function (err, results, fields) {
                     if (err !== null) {
-                        console.log(err);
+                        done();
+
                     }
                 });
 

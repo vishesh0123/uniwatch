@@ -8,7 +8,11 @@
     ]
   },
   "polygon": {
-    "pools": [],
-    "lastupdated": []
+    "pools": [
+      "0xdac8a8e6dbf8c690ec6815e0ff03491b2770255d"
+    ],
+    "lastupdated": [
+      0
+    ]
   }
 }
