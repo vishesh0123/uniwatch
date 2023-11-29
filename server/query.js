@@ -38,8 +38,8 @@ export const getTransactions = async (minBlock, maxBlock, skip, network_id) => {
   const query = `{
     transactions(
       where: {
-        blockNumber_gte: ${minBlock},
-        blockNumber_lte: ${maxBlock},
+        blockNumber_gte: ${parseInt(minBlock)},
+        blockNumber_lte: ${parseInt(maxBlock)},
       },
       first: 1000,
       skip: ${skip},
@@ -118,13 +118,14 @@ export const getTransactions = async (minBlock, maxBlock, skip, network_id) => {
       }
     }
   }`
-  
+
   let data = await axios.post(subgraphUrl, { query: query });
   return data.data.data.transactions;
 
 }
 
-export const getPoolData = async (minTimestamp, maxTimestamp, skip, network_id) => {
+export const getPoolData = async (minTimestamp, maxTimestamp, skip, pool, network_id) => {
+  console.log(typeof pool);
   let subgraphUrl;
   if (network_id === 1) {
     subgraphUrl = process.env.ethereum;
@@ -136,8 +137,9 @@ export const getPoolData = async (minTimestamp, maxTimestamp, skip, network_id) 
   {
     poolDayDatas(
       where : {
-        date_gte: ${minTimestamp}
-        date_lte: ${maxTimestamp}
+        date_gte: ${parseInt(minTimestamp)}
+        date_lte: ${parseInt(maxTimestamp)}
+        pool: "${pool}"
       },
       orderBy: date,
       orderDirection: asc,
@@ -166,5 +168,31 @@ export const getPoolData = async (minTimestamp, maxTimestamp, skip, network_id) 
   `
 
   let data = await axios.post(subgraphUrl, { query: query });
+  console.log(data.data);
   return data.data.data.poolDayDatas;
+}
+
+export const latestPoolDataTimestamp = async (network_id) => {
+  let subgraphUrl;
+  if (network_id === 1) {
+    subgraphUrl = process.env.ethereum;
+  }
+  if (network_id === 137) {
+    subgraphUrl = process.env.polygon;
+  }
+
+  const query = `{
+    poolDayDatas(
+      orderBy: date,
+      orderDirection: desc,
+      first: 1
+      
+    ){
+      id
+      date
+    }
+  }`
+
+  let data = await axios.post(subgraphUrl, { query: query });
+  return parseInt(data.data.data.poolDayDatas[0].date);
 }

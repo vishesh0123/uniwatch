@@ -2,7 +2,7 @@ import mysql from 'mysql2'
 import dbConfig from '../db.config.js'
 import Queue from "bull";
 import fs from 'fs';
-import { getLatestBlock, getTransactions } from './query.js'
+import { getLatestBlock, getTransactions, latestPoolDataTimestamp, getPoolData } from './query.js'
 
 export const createDBConnection = () => {
     const connection = mysql.createConnection(dbConfig);
@@ -13,9 +13,7 @@ export const createDBConnection = () => {
         console.log("\x1b[32m", 'Connected To MySql Server !');
 
     });
-
     return connection;
-
 }
 
 export const createQueue = () => {
@@ -23,7 +21,6 @@ export const createQueue = () => {
     dbqueue.on('completed', () => {
         dbqueue.isReady().then(() => {
             const cache = JSON.parse(fs.readFileSync('cache.json'));
-
             if (cache["ethereum"] !== null) {
                 syncDb(dbqueue, 1);
             }
@@ -34,14 +31,13 @@ export const createQueue = () => {
 
     })
     dbqueue.process(async (job, done) => {
-        let minBlock = job.data.lastSync;
+        let minBlock = job.data.lastsync;
         let maxBlock = job.data.latest;
         let network = job.data.network;
         if (minBlock == maxBlock || minBlock > maxBlock) {
             job.progress(100);
             done();
-        }
-        else {
+        } else {
             let pages = 1000;
             let skip = 0;
             let data;
@@ -117,11 +113,9 @@ export const createQueue = () => {
             }
 
             fs.writeFileSync('cache.json', JSON.stringify(cache, null, 2));
-
-
             done();
         }
-    })
+    });
     console.log("\x1b[32m", 'BullMq Queue Initialized!');
     return dbqueue;
 }
@@ -143,19 +137,122 @@ export const syncDb = async (dbqueue, network_id) => {
 
     for (let i = 0; i < div; i++) {
         dbqueue.add({
-            lastSync: start,
+            lastsync: start,
             latest: start + 4999,
             network: network_id
         })
         start = start + 5000;
 
     }
-
     dbqueue.add({
-        lastSync: start,
+        lastsync: start,
         latest: latest,
         network: network_id
     })
 
+}
 
+export const syncDbPool = async (dbqueue, network_id) => {
+    const cache = JSON.parse(fs.readFileSync('poolcache.json'));
+    let pools;
+    if (network_id === 1) {
+        pools = cache["ethereum"];
+    }
+    if (network_id === 137) {
+        pools = cache["polygon"];
+    }
+
+    let latest = await latestPoolDataTimestamp(network_id);
+    pools.pools.forEach((pool, index) => {
+        const lastupdated = pools.lastupdated[index];
+        if (latest > lastupdated) {
+            dbqueue.add({
+                pool: pool,
+                last: lastupdated + 1,
+                latest: latest,
+                network: network_id
+            })
+        }
+    })
+}
+
+export const createPoolQueue = () => {
+    const dbqueue = new Queue('Queue For Pooldata');
+    dbqueue.process(async (job, done) => {
+        console.log(job.data);
+        let last = job.data.last;
+        let latest = job.data.latest;
+        let network = job.data.network;
+        let pool = job.data.pool;
+        let pages = 1000;
+        let skip = 0;
+        let data;
+        let conn = createDBConnection();
+        console.log("\x1b[32m", `Database is Updated Upto Timestamp ${last - 1}`);
+
+        for (let i = 0; i <= 5000; i++) {
+            data = await getPoolData(last, latest, skip, pool, network);
+            data.forEach(tx => {
+                const { id, date, pool, liquidity, token0Price, token1Price, tick, volumeToken0, volumeToken1, volumeUSD, feesUSD, txCount } = tx;
+                const query = `INSERT INTO pooldata (
+                    id,
+                    date,
+                    pool_id,
+                    liquidity,
+                    token0Price,
+                    token1Price,
+                    tick,
+                    volumeToken0,
+                    volumeToken1,
+                    volumeUSD,
+                    feesUSD,
+                    txCount
+                  ) VALUES (
+                    "${id}",
+                    "${new Date(parseInt(date) * 1000).toISOString().slice(0, 19).replace('T', ' ')}",
+                    "${pool.id}",
+                    0,
+                    ${parseFloat(token0Price)},
+                    ${parseFloat(token1Price)}, 
+                    ${parseInt(tick)},
+                    ${parseFloat(volumeToken0)},
+                    ${parseFloat(volumeToken1)},
+                    ${parseFloat(volumeUSD)},
+                    ${parseFloat(feesUSD)},
+                    ${parseInt(txCount)}
+                  );`
+
+                conn.query(query, function (err, results, fields) {
+                    if (err !== null) {
+                        console.log(err);
+                    }
+                });
+
+
+            });
+            if (data.length < 1000) {
+                break;
+            } else {
+                skip++;
+            }
+
+        }
+        console.log("\x1b[32m", `Fetched Pooldata from Time  ${last} to time ${latest} Successfully !`);
+        // const cache = JSON.parse(fs.readFileSync('poolcache.json'));
+        // if (network === 1) {
+        //     cache.ethereumPool = latest;
+
+        // }
+        // if (network === 137) {
+        //     cache.polygonPool = latest;
+        // }
+
+        // fs.writeFileSync('poolcache.json', JSON.stringify(cache, null, 2));
+
+
+        done();
+
+    })
+    console.log("\x1b[32m", 'BullMq Queue Initialized!');
+    return dbqueue;
 }
