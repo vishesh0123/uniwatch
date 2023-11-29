@@ -9,9 +9,12 @@
   },
   "polygon": {
     "pools": [
-      "0xdac8a8e6dbf8c690ec6815e0ff03491b2770255d"
+      "0xdac8a8e6dbf8c690ec6815e0ff03491b2770255d",
+      "0x45dda9cb7c25131df268515131f647d726f50608"
+
     ],
     "lastupdated": [
+      0,
       0
     ]
   }
