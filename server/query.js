@@ -134,7 +134,7 @@ export const getPoolData = async (minTimestamp, maxTimestamp, skip, pool, networ
   }
   const query = `
   {
-    poolDayDatas(
+    PoolHourDatas(
       where : {
         date_gte: ${parseInt(minTimestamp)}
         date_lte: ${parseInt(maxTimestamp)}
