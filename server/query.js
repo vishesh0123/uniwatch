@@ -136,8 +136,8 @@ export const getPoolData = async (minTimestamp, maxTimestamp, skip, pool, networ
   {
     PoolHourDatas(
       where : {
-        date_gte: ${parseInt(minTimestamp)}
-        date_lte: ${parseInt(maxTimestamp)}
+        periodStartUnix_gte: ${parseInt(minTimestamp)}
+        periodStartUnix_lte: ${parseInt(maxTimestamp)}
         pool: "${pool}"
       },
       orderBy: date,
@@ -147,7 +147,7 @@ export const getPoolData = async (minTimestamp, maxTimestamp, skip, pool, networ
       
     ){
       id
-      date
+      periodStartUnix
       pool {
         id
       }
